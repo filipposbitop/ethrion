@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#dccbae">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Ethrion Basement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap">
+<style>
+/* Layout: sticky brand header, month grid, day list below, two floating actions. Sand paper + black ink, taken from the logo. */
+:root{
+  --sand:#dccbae;
+  --paper:#efe3cb;
+  --ink:#111111;
+  --muted:#6b5d45;
+  --line:#c4b08c;
+  --danger:#8b1a1a;
+  --font:Lato,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{padding-top:env(safe-area-inset-top,0px)}
+body{
+  background:var(--sand);color:var(--ink);font-family:var(--font);font-size:16px;
+  padding-block:0 96px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--sand)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.page{max-width:760px;margin:0 auto}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--sand);padding:12px 0;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.brand svg{height:38px;width:auto;flex:none;color:var(--ink)}
+.brand b{display:block;letter-spacing:.2em;font-weight:300;font-size:19px;line-height:1}
+.brand small{display:block;letter-spacing:.24em;font-size:9px;font-weight:400;margin-top:3px}
+.btn{border:1.5px solid var(--ink);background:transparent;border-radius:10px;padding:10px 14px;font-weight:700;min-height:44px}
+.btn.primary{background:var(--ink);color:var(--sand)}
+.btn.danger{border-color:var(--danger);color:var(--danger)}
+.btn.small{padding:6px 12px;font-size:14px;min-height:40px}
+.btn:disabled{opacity:.4;cursor:default}
+.monthbar{display:flex;align-items:center;justify-content:space-between;margin:14px 0 10px}
+.monthbar h2{margin:0;font-weight:400;font-size:22px;text-transform:capitalize;letter-spacing:.02em}
+.monthbar button{width:46px;height:46px;border-radius:50%;border:1.5px solid var(--ink);background:transparent;font-size:22px;line-height:1}
+.monthbar button:disabled{opacity:.25}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.dow{text-align:center;font-size:12px;color:var(--muted);padding:4px 0;font-weight:700;letter-spacing:.06em}
+.day{aspect-ratio:1/1.05;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:4px 5px;display:flex;flex-direction:column;justify-content:space-between;text-align:left;min-width:0}
+.day.empty{background:transparent;border:none}
+.day .n{font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
+.day .c{align-self:flex-end;background:var(--ink);color:var(--sand);border-radius:999px;font-size:12px;min-width:22px;height:22px;display:flex;align-items:center;justify-content:center;padding:0 5px;font-weight:700}
+.day.today{outline:2.5px solid var(--ink);outline-offset:-2px;background:#f8f1e1}
+.day.sel{background:var(--ink);color:var(--sand)}
+.day.sel .c{background:var(--sand);color:var(--ink)}
+.panel{margin-top:16px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px}
+.panel h3{margin:0 0 6px;font-weight:700;font-size:17px;text-transform:capitalize}
+.res{display:flex;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.res .t{font-weight:700;font-size:20px;min-width:60px;font-variant-numeric:tabular-nums}
+.res .i{flex:1;min-width:0}
+.res .i div:first-child{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.res .i div:last-child{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.res .i div:last-child:empty{display:none}
+.empty-msg{color:var(--muted);padding:6px 0}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.fab{position:fixed;right:max(16px,calc(env(safe-area-inset-right,0px) + 12px));bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;z-index:6}
+.fab .btn{box-shadow:0 3px 12px #0003;padding:13px 18px;background:var(--sand)}
+.fab .btn.primary{background:var(--ink)}
+dialog{border:none;border-radius:14px;padding:0;width:min(94vw,460px);max-height:92vh;background:var(--paper);color:var(--ink)}
+dialog::backdrop{background:#000a}
+.dlg{padding:16px;display:flex;flex-direction:column;gap:12px}
+.dlg h3{margin:0;font-size:19px}
+label{font-size:13px;font-weight:700;color:var(--muted);display:flex;flex-direction:column;gap:4px;letter-spacing:.02em}
+input,select{font:inherit;padding:10px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);width:100%;min-height:44px}
+.row{display:flex;gap:10px}.row>*{flex:1;min-width:0}
+.actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.list{max-height:28vh;overflow:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+.list label{flex-direction:row;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid #eee;color:var(--ink);font-weight:400;font-size:14px}
+.list input{width:auto;min-height:0}
+.prev{display:grid;gap:10px;max-height:40vh;overflow:auto}
+.prev img{width:100%;height:auto;border:1px solid var(--line);background:#fff;display:block}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--sand);padding:10px 16px;border-radius:10px;font-weight:700;z-index:30;max-width:90vw;text-align:center}
+#printArea{display:none}
+@media print{
+  @page{size:A4;margin:0}
+  html,body{background:#fff;padding:0}
+  body::before{display:none}
+  .page,.fab,dialog,.toast{display:none!important}
+  #printArea{display:block}
+  #printArea img{display:block;width:210mm;height:297mm;page-break-after:always;break-after:page}
+  #printArea img:last-child{page-break-after:auto;break-after:auto}
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 100 200" aria-hidden="true"><use href="#leaf"/></svg>
+    <div><b>ETHRION</b><small>BASEMENT</small></div>
+  </div>
+  <button class="btn small" id="btnToday" type="button">Σήμερα</button>
+  <button class="btn small" id="btnMenu" type="button" aria-label="Αντίγραφο ασφαλείας">⋯</button>
+</header>
+
+<main>
+  <div class="monthbar">
+    <button id="prev" type="button" aria-label="Προηγούμενος μήνας">‹</button>
+    <h2 id="monthTitle"></h2>
+    <button id="next" type="button" aria-label="Επόμενος μήνας">›</button>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="panel" id="dayPanel"></div>
+</main>
+</div>
+
+<div class="fab">
+  <button class="btn" id="btnExport" type="button">Εκτύπωση</button>
+  <button class="btn primary" id="btnAdd" type="button">+ Κράτηση</button>
+</div>
+
+<dialog id="dlgRes">
+  <form class="dlg" id="formRes">
+    <h3 id="resTitle">Νέα κράτηση</h3>
+    <div class="row">
+      <label for="fDate">Ημερομηνία<input type="date" id="fDate" required min="2026-01-01" max="2028-12-31"></label>
+      <label for="fTime">Ώρα<input type="time" id="fTime" required></label>
+    </div>
+    <label for="fName">Όνομα<input type="text" id="fName" required maxlength="40" autocomplete="off"></label>
+    <div class="row">
+      <label for="fPeople">Άτομα<input type="number" id="fPeople" min="1" max="99" value="2" required inputmode="numeric"></label>
+      <label for="fPhone">Τηλέφωνο (προαιρετικά)<input type="tel" id="fPhone" maxlength="20"></label>
+    </div>
+    <label for="fNotes">Σημειώσεις (προαιρετικά)<input type="text" id="fNotes" maxlength="60"></label>
+    <div class="actions">
+      <button type="button" class="btn danger" id="btnDelete" hidden>Διαγραφή</button>
+      <button type="button" class="btn" id="btnCancel">Ακύρωση</button>
+      <button type="submit" class="btn primary">Αποθήκευση</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgExp">
+  <div class="dlg">
+    <h3>Εκτύπωση</h3>
+    <div class="row">
+      <label for="eFrom">Από<input type="date" id="eFrom" min="2026-01-01" max="2028-12-31"></label>
+      <label for="eTo">Έως<input type="date" id="eTo" min="2026-01-01" max="2028-12-31"></label>
+    </div>
+    <label for="ePer">Ετικέτες ανά σελίδα
+      <select id="ePer"><option value="10">10 ανά σελίδα</option><option value="12">12 ανά σελίδα</option></select>
+    </label>
+    <div class="list" id="eList"></div>
+    <p class="hint" id="eCount"></p>
+    <p class="hint" id="eHint">Τύπωσε σε A4 (ή διάλεξε «Αποθήκευση ως PDF») και κόψε στις διακεκομμένες γραμμές.</p>
+    <div class="actions">
+      <button class="btn" id="eClose" type="button">Κλείσιμο</button>
+      <button class="btn primary" id="eMake" type="button">Εκτύπωση</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dlgMenu">
+  <div class="dlg">
+    <h3>Αντίγραφο ασφαλείας</h3>
+    <p class="hint">Οι κρατήσεις αποθηκεύονται μόνο σε αυτή τη συσκευή. Κατέβασε ένα αντίγραφο κάθε τόσο, ή για να τις περάσεις σε άλλο κινητό.</p>
+    <button class="btn" id="bExport" type="button">Λήψη αντιγράφου</button>
+    <button class="btn" id="bImport" type="button">Επαναφορά από αντίγραφο</button>
+    <input type="file" id="bFile" accept="application/json,.json" hidden>
+    <div class="actions"><button class="btn primary" id="mClose" type="button">Κλείσιμο</button></div>
+  </div>
+</dialog>
+
+<div id="printArea"></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="leaf">
+      <path d="M50 3 C84 38 98 105 52 197 L48 197 C2 105 16 38 50 3 Z" fill="currentColor"/>
+      <g fill="none" stroke="#dccbae" stroke-linecap="round" stroke-width="3">
+        <path d="M50 70 V197"/>
+        <path d="M33 62 L50 84 L66 66"/>
+        <path d="M24 100 L50 130 L77 98"/>
+        <path d="M14 126 L50 168 L86 120"/>
+      </g>
+    </g>
+  </defs>
+</svg>
+
+<script>
+(function(){
+"use strict";
+var MIN={y:2026,m:0}, MAX={y:2028,m:11};
+var KEY="ethrion_reservations_v1";
+var $=function(id){return document.getElementById(id)};
+var res=[];
+try{res=JSON.parse(localStorage.getItem(KEY)||"[]"); if(!Array.isArray(res))res=[]}catch(e){res=[]}
+var storageWarned=false;
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(res))}
+  catch(e){ if(!storageWarned){storageWarned=true;toast("Δεν μπορώ να αποθηκεύσω σε αυτό το πρόγραμμα περιήγησης")} }
+}
+function pad(n){return n<10?"0"+n:""+n}
+function ds(y,m,d){return y+"-"+pad(m+1)+"-"+pad(d)}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+var toastTimer=null;
+function toast(msg){
+  var t=document.querySelector(".toast"); if(t)t.remove();
+  t=document.createElement("div"); t.className="toast"; t.setAttribute("role","status"); t.textContent=msg;
+  document.body.appendChild(t); clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){t.remove()},3200);
+}
+var now=new Date(), todayS=ds(now.getFullYear(),now.getMonth(),now.getDate());
+function clampView(y,m){
+  var v=y*12+m, lo=MIN.y*12+MIN.m, hi=MAX.y*12+MAX.m;
+  v=Math.max(lo,Math.min(hi,v)); return {y:Math.floor(v/12),m:v%12};
+}
+var view=clampView(now.getFullYear(),now.getMonth());
+var sel=todayS;
+function parse(s){var p=s.split("-");return new Date(+p[0],+p[1]-1,+p[2])}
+function fmtLong(s){return parse(s).toLocaleDateString("el-GR",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
+function fmtShort(s){return parse(s).toLocaleDateString("el-GR",{weekday:"short",day:"numeric",month:"short",year:"numeric"})}
+function personsText(n){return n===1?"1 άτομο":n+" άτομα"}
+function byDay(s){return res.filter(function(r){return r.date===s}).sort(function(a,b){return a.time<b.time?-1:a.time>b.time?1:0})}
+
+function render(){
+  var first=new Date(view.y,view.m,1);
+  $("monthTitle").textContent=first.toLocaleDateString("el-GR",{month:"long",year:"numeric"});
+  $("prev").disabled=(view.y===MIN.y&&view.m===MIN.m);
+  $("next").disabled=(view.y===MAX.y&&view.m===MAX.m);
+  var counts={}; res.forEach(function(r){counts[r.date]=(counts[r.date]||0)+1});
+  var h="";
+  ["Δευ","Τρί","Τετ","Πέμ","Παρ","Σάβ","Κυρ"].forEach(function(d){h+='<div class="dow">'+d+'</div>'});
+  var offset=(first.getDay()+6)%7, days=new Date(view.y,view.m+1,0).getDate();
+  for(var i=0;i<offset;i++)h+='<div class="day empty"></div>';
+  for(var d=1;d<=days;d++){
+    var s=ds(view.y,view.m,d), c=counts[s]||0;
+    h+='<button type="button" class="day'+(s===todayS?' today':'')+(s===sel?' sel':'')+'" data-d="'+s+'"><span class="n">'+d+'</span>'+(c?'<span class="c">'+c+'</span>':'<span></span>')+'</button>';
+  }
+  $("grid").innerHTML=h;
+  renderDay();
+}
+function renderDay(){
+  var list=byDay(sel), people=list.reduce(function(a,r){return a+(+r.people||0)},0);
+  var h='<h3>'+esc(fmtLong(sel))+'</h3>';
+  if(!list.length)h+='<div class="empty-msg">Δεν υπάρχουν κρατήσεις αυτή την ημέρα.</div>';
+  else{
+    h+='<p class="hint" style="margin-bottom:6px">'+(list.length===1?'1 κράτηση':list.length+' κρατήσεις')+' · '+personsText(people)+'</p>';
+    list.forEach(function(r){
+      h+='<div class="res"><div class="t">'+esc(r.time)+'</div><div class="i"><div>'+esc(r.name)+' · '+esc(personsText(+r.people))+'</div><div>'+esc([r.phone,r.notes].filter(Boolean).join(" · "))+'</div></div><button type="button" class="btn small" data-edit="'+esc(r.id)+'">Αλλαγή</button></div>';
+    });
+  }
+  $("dayPanel").innerHTML=h;
+}
+$("grid").addEventListener("click",function(e){
+  var b=e.target.closest("[data-d]"); if(!b)return; sel=b.getAttribute("data-d"); render();
+});
+$("dayPanel").addEventListener("click",function(e){
+  var b=e.target.closest("[data-edit]"); if(b)openForm(b.getAttribute("data-edit"));
+});
+$("prev").onclick=function(){view=clampView(view.y,view.m-1);render()};
+$("next").onclick=function(){view=clampView(view.y,view.m+1);render()};
+$("btnToday").onclick=function(){view=clampView(now.getFullYear(),now.getMonth());sel=todayS;render()};
+
+/* ---- form ---- */
+var editing=null, delArmed=false;
+function openForm(id){
+  editing=id||null; delArmed=false;
+  var r=id?res.filter(function(x){return x.id===id})[0]:null;
+  $("resTitle").textContent=r?"Αλλαγή κράτησης":"Νέα κράτηση";
+  $("fDate").value=r?r.date:sel;
+  $("fTime").value=r?r.time:"";
+  $("fName").value=r?r.name:"";
+  $("fPeople").value=r?r.people:2;
+  $("fPhone").value=r?r.phone||"":"";
+  $("fNotes").value=r?r.notes||"":"";
+  $("btnDelete").hidden=!r;
+  $("btnDelete").textContent="Διαγραφή";
+  $("dlgRes").showModal();
+}
+$("btnAdd").onclick=function(){openForm()};
+$("btnCancel").onclick=function(){$("dlgRes").close()};
+$("formRes").addEventListener("submit",function(e){
+  e.preventDefault();
+  var date=$("fDate").value;
+  if(date<"2026-01-01"||date>"2028-12-31"){toast("Η ημερομηνία πρέπει να είναι από 2026 έως 2028");return}
+  var o={date:date,time:$("fTime").value,name:$("fName").value.trim(),people:+$("fPeople").value,phone:$("fPhone").value.trim(),notes:$("fNotes").value.trim()};
+  if(!o.name||!o.time)return;
+  if(editing){res=res.map(function(r){return r.id===editing?Object.assign({id:editing},o):r})}
+  else{o.id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);res.push(o)}
+  save(); sel=date; var p=date.split("-"); view=clampView(+p[0],+p[1]-1);
+  $("dlgRes").close(); render();
+});
+$("btnDelete").onclick=function(){
+  if(!editing)return;
+  if(!delArmed){delArmed=true;$("btnDelete").textContent="Πάτα ξανά για διαγραφή";return}
+  res=res.filter(function(r){return r.id!==editing});save();$("dlgRes").close();render();
+};
+
+/* ---- labels → PDF ---- */
+var pages=[];
+function expList(){
+  var a=$("eFrom").value,b=$("eTo").value;
+  return res.filter(function(r){return (!a||r.date>=a)&&(!b||r.date<=b)})
+    .sort(function(x,y){return x.date+x.time<y.date+y.time?-1:1});
+}
+function resetPrev(){pages=[]}
+function renderExp(){
+  resetPrev();
+  var l=expList(), h="";
+  if(!l.length)h='<div class="empty-msg" style="padding:10px">Δεν υπάρχουν κρατήσεις σε αυτό το διάστημα.</div>';
+  l.forEach(function(r){
+    h+='<label><input type="checkbox" checked data-id="'+esc(r.id)+'"><span>'+esc(fmtShort(r.date))+' · <b>'+esc(r.time)+'</b> · '+esc(r.name)+' ('+esc(r.people)+')</span></label>';
+  });
+  $("eList").innerHTML=h; updCount();
+}
+function checkedIds(){return Array.prototype.map.call($("eList").querySelectorAll("input:checked"),function(i){return i.getAttribute("data-id")})}
+function updCount(){
+  var n=checkedIds().length, per=+$("ePer").value;
+  $("eCount").textContent=n+" επιλεγμένες · "+Math.ceil(n/per)+" σελίδα/ες";
+}
+$("btnExport").onclick=function(){
+  $("eFrom").value=sel;$("eTo").value=sel;renderExp();$("dlgExp").showModal();
+};
+$("eFrom").onchange=$("eTo").onchange=renderExp;
+$("ePer").onchange=function(){resetPrev();updCount()};
+$("eList").addEventListener("change",function(){resetPrev();updCount()});
+$("eClose").onclick=function(){$("dlgExp").close()};
+
+var LEAF=null;
+function leafPath(){ if(!LEAF)LEAF=new Path2D("M50 3 C84 38 98 105 52 197 L48 197 C2 105 16 38 50 3 Z"); return LEAF}
+function spaced(ctx,v){ if("letterSpacing" in ctx)ctx.letterSpacing=v }
+function fitText(ctx,text,maxW){
+  if(ctx.measureText(text).width<=maxW)return text;
+  while(text.length>1&&ctx.measureText(text+"…").width>maxW)text=text.slice(0,-1);
+  return text+"…";
+}
+function drawLabel(ctx,x,y,w,h,r,per){
+  var F='"Lato",system-ui,"Segoe UI",Roboto,sans-serif';
+  var leafH=per===10?17:14, s=leafH/200;
+  var logoW=24, cx=x+4+logoW/2;
+  var blockH=leafH+1.8+3.4+3.2, ty=y+(h-blockH)/2;
+  ctx.save();
+  ctx.translate(cx-50*s,ty); ctx.scale(s,s);
+  ctx.fillStyle="#000"; ctx.fill(leafPath());
+  ctx.strokeStyle="#fff"; ctx.lineWidth=3.4; ctx.lineCap="round"; ctx.lineJoin="round";
+  [[[50,70],[50,197]],[[33,62],[50,84],[66,66]],[[24,100],[50,130],[77,98]],[[14,126],[50,168],[86,120]]].forEach(function(seg){
+    ctx.beginPath(); ctx.moveTo(seg[0][0],seg[0][1]);
+    for(var i=1;i<seg.length;i++)ctx.lineTo(seg[i][0],seg[i][1]);
+    ctx.stroke();
+  });
+  ctx.restore();
+  ctx.save();
+  ctx.fillStyle="#000"; ctx.textAlign="center"; ctx.textBaseline="alphabetic";
+  ctx.font="300 3.3px "+F; spaced(ctx,"0.45px");
+  ctx.fillText("ETHRION",cx,ty+leafH+1.8+2.9);
+  ctx.font="300 1.9px "+F; spaced(ctx,"0.4px");
+  ctx.fillText("BASEMENT",cx,ty+leafH+1.8+3.4+2.4);
+  ctx.restore();
+  var dx=x+4+logoW+2.5;
+  ctx.fillStyle="#000"; ctx.fillRect(dx,y+5,0.3,h-10);
+  var tx=dx+4, maxW=x+w-3-tx;
+  var top=y+(h-21.4)/2;
+  ctx.save();
+  ctx.fillStyle="#000"; ctx.textAlign="left"; ctx.textBaseline="alphabetic"; spaced(ctx,"0px");
+  ctx.font="400 3.4px "+F;
+  ctx.fillText(fitText(ctx,fmtShort(r.date),maxW),tx,top+3.2);
+  ctx.font="700 "+(per===10?8:7)+"px "+F;
+  ctx.fillText(r.time,tx,top+3.2+8);
+  ctx.font="700 "+(per===10?4.6:4.2)+"px "+F;
+  ctx.fillText(fitText(ctx,r.name,maxW),tx,top+3.2+8+5.6);
+  ctx.font="400 3.8px "+F;
+  ctx.fillText(personsText(+r.people),tx,top+3.2+8+5.6+4.6);
+  ctx.restore();
+}
+function drawSheet(items,per){
+  var PX=6, W=210, H=297, M=8;
+  var c=document.createElement("canvas"); c.width=W*PX; c.height=H*PX;
+  var ctx=c.getContext("2d"); ctx.scale(PX,PX);
+  ctx.fillStyle="#fff"; ctx.fillRect(0,0,W,H);
+  var rows=per/2, cw=(W-2*M)/2, ch=(H-2*M)/rows;
+  for(var i=0;i<per;i++){
+    var x=M+(i%2)*cw, y=M+Math.floor(i/2)*ch;
+    ctx.save(); ctx.setLineDash([1.6,1.2]); ctx.lineWidth=0.3; ctx.strokeStyle="#777"; ctx.strokeRect(x,y,cw,ch); ctx.restore();
+    if(items[i])drawLabel(ctx,x,y,cw,ch,items[i],per);
+  }
+  return c.toDataURL("image/jpeg",0.92);
+}
+function loadFonts(){
+  if(!document.fonts||!document.fonts.load)return Promise.resolve();
+  var p=Promise.all([document.fonts.load('300 20px Lato'),document.fonts.load('400 20px Lato'),document.fonts.load('700 20px Lato')]).catch(function(){});
+  var t=new Promise(function(res){setTimeout(res,3000)});
+  return Promise.race([p,t]);
+}
+$("eMake").onclick=function(){
+  var ids=checkedIds(), per=+$("ePer").value;
+  var items=expList().filter(function(r){return ids.indexOf(r.id)>-1});
+  if(!items.length){toast("Επίλεξε τουλάχιστον μία κράτηση");return}
+  var btn=$("eMake"); btn.disabled=true; btn.textContent="Ετοιμάζω…";
+  loadFonts().then(function(){
+    var h="";
+    for(var i=0;i<items.length;i+=per)h+='<img alt="" src="'+drawSheet(items.slice(i,i+per),per)+'">';
+    $("printArea").innerHTML=h;
+    $("dlgExp").close();
+    var imgs=$("printArea").querySelectorAll("img");
+    return Promise.all(Array.prototype.map.call(imgs,function(im){return im.decode?im.decode().catch(function(){}):Promise.resolve()}));
+  }).then(function(){
+    setTimeout(function(){window.print()},120);
+  }).catch(function(){toast("Δεν μπόρεσα να ετοιμάσω την εκτύπωση")}).then(function(){
+    btn.disabled=false; btn.textContent="Εκτύπωση";
+  });
+};
+window.addEventListener("afterprint",function(){$("printArea").innerHTML=""});
+
+/* ---- downloads / backup ---- */
+function saveFile(name,data,okMsg){
+  try{
+    var blob=new Blob([data],{type:"application/json"});
+    var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){URL.revokeObjectURL(a.href)},4000);
+    toast(okMsg);
+  }catch(e){toast("Δεν έγινε η λήψη. Ξαναδοκίμασε")}
+}
+$("btnMenu").onclick=function(){$("dlgMenu").showModal()};
+$("mClose").onclick=function(){$("dlgMenu").close()};
+$("bExport").onclick=function(){
+  saveFile("ethrion-krataseis-"+todayS+".json",JSON.stringify(res,null,1),"Το αντίγραφο αποθηκεύτηκε");
+};
+$("bImport").onclick=function(){$("bFile").click()};
+$("bFile").onchange=function(){
+  var f=this.files[0]; if(!f)return;
+  var inp=this, rd=new FileReader();
+  rd.onload=function(){
+    try{
+      var data=JSON.parse(rd.result);
+      if(!Array.isArray(data))throw new Error("bad");
+      var have={};res.forEach(function(r){have[r.id]=1});
+      var add=data.filter(function(r){return r&&r.id&&r.date&&r.time&&r.name&&!have[r.id]});
+      res=res.concat(add);save();render();
+      $("dlgMenu").close();
+      toast(add.length+" κρατήσεις επαναφέρθηκαν");
+    }catch(e){toast("Το αρχείο δεν είναι έγκυρο αντίγραφο")}
+  };
+  rd.readAsText(f); inp.value="";
+};
+
+render();
+if(navigator.storage&&navigator.storage.persist){try{navigator.storage.persist()}catch(e){}}
+if("serviceWorker" in navigator&&location.protocol!=="file:"){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}
+})();
+</script>
+</body>
+</html>
